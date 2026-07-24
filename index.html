@@ -813,7 +813,7 @@
           <input type="text" id="cPerson" name="person" autocomplete="name" placeholder="例）山田 太郎">
         </div>
         <div class="form-row">
-          <label class="field-label" for="cTel">電話番号</label>
+          <label class="field-label" for="cTel">電話番号<span class="required">必須</span></label>
           <input type="tel" id="cTel" name="tel" autocomplete="tel" placeholder="例）0242-00-0000">
         </div>
         <div class="form-row">
@@ -1378,6 +1378,10 @@ function telError(tel) {
   if (digits.length < 10 || digits.length > 11) {
     return "電話番号の形式をご確認ください（市外局番からご入力ください）。";
   }
+  // 国内の電話番号は必ず0から始まる。+81等の海外表記・国際電話番号を弾く
+  if (!digits.startsWith("0")) {
+    return "国内の電話番号（0から始まる番号）をご入力ください。";
+  }
   // 全部同じ数字・連番など、明らかに実在しない番号を弾く
   if (/^(.)\1+$/.test(digits) || "012345678901".includes(digits) || "098765432109".includes(digits)) {
     return "実際にご連絡のつく電話番号をご入力ください。";
@@ -1597,7 +1601,7 @@ function handleContactSubmit(form) {
   // 必須項目のチェック
   if (!company) errors.push("会社名をご入力ください。");
   if (!person)  errors.push("ご担当者様名をご入力ください。");
-  if (!tel && !email) errors.push("ご連絡のため、電話番号またはメールアドレスのどちらかをご入力ください。");
+  if (!tel) errors.push("電話番号をご入力ください。実在するご連絡先の確認のため、電話番号のご入力を必須とさせていただいております。");
 
   // 会社名の実在性チェック：明らかに架空・でたらめな会社名を拒否する
   // ※ 登記情報との照合はブラウザだけでは行えないため、機械的に判定できる範囲で弾く。
@@ -1608,9 +1612,9 @@ function handleContactSubmit(form) {
     if (normCompany.length < 2 || /^(.)\1+$/.test(normCompany)) {
       // 1文字だけ・同じ文字の羅列（「あああ」等）
       errors.push("会社名（施設名・店舗名）は正式名称でご入力ください。");
-    } else if (!/[ぁ-んァ-ヶ一-龠a-z]/.test(normCompany)) {
-      // 数字や記号だけの会社名
-      errors.push("会社名（施設名・店舗名）は正式名称でご入力ください。");
+    } else if (!/[ぁ-んァ-ヶ一-龠]/.test(normCompany)) {
+      // 数字・記号・英字だけの会社名（日本語を含まない海外からの機械的な送信対策）
+      errors.push("会社名（施設名・店舗名）は日本語の正式名称でご入力ください。");
     } else if (fakeHit) {
       errors.push("会社名をご確認ください。実在が確認できない会社名でのお問い合わせには、ご返答いたしかねます。");
     }
